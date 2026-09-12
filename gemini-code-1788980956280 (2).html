@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Analogy: Sequential Stern-Gerlach vs. Light Polarization</title>
+    <style>
+        :root {
+            --bg-color: #0a0d14;
+            --card-bg: rgba(22, 27, 38, 0.8);
+            --accent-sg: #00f3ff;
+            --accent-opt: #ffb700;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #2d3748;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, var(--accent-sg), #a855f7, var(--accent-opt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .controls-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px 25px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-group {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .slider-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .slider-title span.val {
+            color: var(--accent-sg);
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #2d3748;
+            outline: none;
+            accent-color: var(--accent-sg);
+            cursor: pointer;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #334155;
+            border-color: var(--accent-sg);
+        }
+
+        button.active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--accent-sg);
+            color: var(--accent-sg);
+            font-weight: 600;
+        }
+
+        .canvas-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .experiment-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .experiment-card.sg {
+            border-left: 4px solid var(--accent-sg);
+        }
+
+        .experiment-card.opt {
+            border-left: 4px solid var(--accent-opt);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-sg { background: rgba(0, 243, 255, 0.15); color: var(--accent-sg); }
+        .badge-opt { background: rgba(255, 183, 0, 0.15); color: var(--accent-opt); }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            font-family: monospace;
+            color: var(--text-muted);
+        }
+
+        .stats-bar span {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        canvas {
+            width: 100%;
+            height: 220px;
+            background: #07090e;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .math-comparison {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .math-comparison { grid-template-columns: 1fr; }
+        }
+
+        .math-box {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .math-box h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .math-box code {
+            display: block;
+            background: #05070a;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            margin: 6px 0;
+            overflow-x: auto;
+        }
+
+        .explanation {
+            grid-column: 1 / -1;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+            margin-top: 5px;
+        }
+
+        .highlight {
+            color: var(--accent-sg);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Quantum Isomorphism Analogy</h1>
+        <p class="subtitle">
+            Sequential Stern-Gerlach (Spin-1/2) vs. Optical Polarization Filters (Photons).<br>
+            Observe how rotated spin measurements map directly onto rotated light polarizers.
+        </p>
+    </header>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+        <div class="slider-group">
+            <div class="slider-title">
+                <span>Middle SG Axis ($\theta_{SG}$)</span>
+                <span class="val" id="angleSGVal">90°</span>
+            </div>
+            <input type="range" id="angleSlider" min="0" max="180" value="90" step="1">
+            <div class="slider-title" style="margin-top: 8px;">
+                <span>Equivalent Polarizer Angle ($\alpha = \theta / 2$)</span>
+                <span class="val" id="angleOptVal" style="color: var(--accent-opt);">45°</span>
+            </div>
+        </div>
+
+        <div class="preset-buttons">
+            <button class="preset-btn active" onclick="setPreset(90)">3-Stage Paradox (90° / 45°)</button>
+            <button class="preset-btn" onclick="setPreset(180)">Blocked Axis (180° / 90°)</button>
+            <button class="preset-btn" onclick="setPreset(0)">Aligned Axis (0° / 0°)</button>
+        </div>
+    </div>
+
+    <!-- Main Canvas Stack -->
+    <div class="canvas-container">
+
+        <!-- Stern-Gerlach Visual -->
+        <div class="experiment-card sg">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="badge badge-sg">Spin-1/2</span>
+                    Sequential Stern-Gerlach Filters
+                </div>
+                <div class="stats-bar">
+                    Stage 1: <span>50%</span> | 
+                    Stage 2: <span id="sgStage2Prob">50.0%</span> | 
+                    Final Detector: <span id="sgFinalProb" style="color: var(--accent-sg);">12.5%</span>
+                </div>
+            </div>
+            <canvas id="canvasSG" width="970" height="220"></canvas>
+        </div>
+
+        <!-- Optical Polarization Visual -->
+        <div class="experiment-card opt">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="badge badge-opt">Photon Polarization</span>
+                    Sequential Linear Polarizers
+                </div>
+                <div class="stats-bar">
+                    Filter 1: <span>50%</span> | 
+                    Filter 2: <span id="optStage2Prob">50.0%</span> | 
+                    Final Intensity: <span id="optFinalProb" style="color: var(--accent-opt);">12.5%</span>
+                </div>
+            </div>
+            <canvas id="canvasOpt" width="970" height="220"></canvas>
+        </div>
+
+    </div>
+
+    <!-- Mathematical Comparison Box -->
+    <div class="math-comparison">
+        <div class="math-box">
+            <h3 style="color: var(--accent-sg);">Stern-Gerlach Formalism</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Spin-1/2 Qubit ($|z+\rangle$, $|z-\rangle$ basis):</p>
+            <code>SG1 (|z+⟩): Filter state to |z+⟩</code>
+            <code>SG2 (|θ+⟩): P = |⟨θ+|z+⟩|² = cos²(θ/2)</code>
+            <code>SG3 (|z+⟩): P = |⟨z+|θ+⟩|² = cos²(θ/2)</code>
+            <p style="font-size: 0.85rem; margin-top: 6px;">Total Throughput: $P_{total} = \frac{1}{2} \cos^4(\theta/2)$</p>
+        </div>
+
+        <div class="math-box">
+            <h3 style="color: var(--accent-opt);">Polarization Formalism</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Photon Vector Field ($|V\rangle$, $|H\rangle$ basis):</p>
+            <code>Pol 1 (Vertical): Intensity I₁ = I₀ / 2</code>
+            <code>Pol 2 (Angle α): Malus' Law I₂ = I₁ cos²(α)</code>
+            <code>Pol 3 (Vertical): Malus' Law I₃ = I₂ cos²(α)</code>
+            <p style="font-size: 0.85rem; margin-top: 6px;">Total Intensity: $I_{total} = \frac{1}{2} \cos^4(\alpha)$</p>
+        </div>
+
+        <div class="explanation">
+            <strong>Key Insights & Isomorphism:</strong>
+            <ul style="margin-left: 20px; margin-top: 6px;">
+                <li>Both systems are two-level quantum systems (Qubits) isomorphic to $SU(2) / SO(3)$.</li>
+                <li><strong>The $2\times$ Spatial Mapping:</strong> A spin rotation of angle $\theta$ in physical space corresponds to an optical polarizer rotation of $\alpha = \theta / 2$. This is because Spin-1/2 state vectors require a $360^\circ$ spatial rotation to invert sign, whereas photon vector fields repeat after $180^\circ$.</li>
+                <li><strong>Quantum Measurement Paradox:</strong> If the middle filter is orthogonal ($\theta = 180^\circ, \alpha = 90^\circ$), 0% of particles pass. Inserting a diagonal middle filter ($\theta = 90^\circ, \alpha = 45^\circ$) <em>increases</em> final output from <strong>0% to 12.5%</strong>! The middle filter resets the quantum state vector.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Set up canvases
+        const canvasSG = document.getElementById('canvasSG');
+        const ctxSG = canvasSG.getContext('2d');
+
+        const canvasOpt = document.getElementById('canvasOpt');
+        const ctxOpt = canvasOpt.getContext('2d');
+
+        // UI Controls
+        const angleSlider = document.getElementById('angleSlider');
+        const angleSGVal = document.getElementById('angleSGVal');
+        const angleOptVal = document.getElementById('angleOptVal');
+
+        const sgStage2Prob = document.getElementById('sgStage2Prob');
+        const sgFinalProb = document.getElementById('sgFinalProb');
+        const optStage2Prob = document.getElementById('optStage2Prob');
+        const optFinalProb = document.getElementById('optFinalProb');
+
+        let thetaDeg = 90; // Stern-Gerlach angle (0 to 180)
+        let alphaDeg = 45; // Optical polarizer angle (0 to 90)
+
+        // Stage Horizontal Coordinates
+        const X_SOURCE = 60;
+        const X_STAGE1 = 250;
+        const X_STAGE2 = 500;
+        const X_STAGE3 = 750;
+        const X_DETECTOR = 910;
+        const Y_CENTER = 110;
+
+        // Particle System for Stern Gerlach
+        const sgParticles = [];
+        const optParticles = [];
+
+        class SGParticle {
+            constructor() {
+                this.x = X_SOURCE;
+                this.y = Y_CENTER + (Math.random() - 0.5) * 12;
+                this.speed = 2.2 + Math.random() * 0.6;
+                this.stage = 0; // 0: source->1, 1: 1->2, 2: 2->3, 3: 3->det, -1: blocked
+                this.spinAngle = Math.random() * Math.PI * 2; // initial random spin
+                this.blockedAt = 0;
+                this.alpha = 1.0;
+            }
+
+            update(thetaRad) {
+                if (this.stage === -1) {
+                    this.alpha -= 0.04;
+                    return;
+                }
+
+                this.x += this.speed;
+
+                // Stage 1 Filter Interaction (Z-axis)
+                if (this.stage === 0 && this.x >= X_STAGE1) {
+                    if (Math.random() < 0.5) {
+                        this.stage = 1;
+                        this.spinAngle = -Math.PI / 2; // Up (+z)
+                        this.y = Y_CENTER - 15;
+                    } else {
+                        this.stage = -1; // Blocked (-z)
+                        this.y = Y_CENTER + 25;
+                    }
+                }
+
+                // Stage 2 Filter Interaction (Rotated theta)
+                else if (this.stage === 1 && this.x >= X_STAGE2) {
+                    const prob = Math.pow(Math.cos(thetaRad / 2), 2);
+                    if (Math.random() < prob) {
+                        this.stage = 2;
+                        this.spinAngle = -Math.PI / 2 + thetaRad; // Rotated spin state
+                        this.y = Y_CENTER - 15;
+                    } else {
+                        this.stage = -1;
+                        this.y = Y_CENTER + 25;
+                    }
+                }
+
+                // Stage 3 Filter Interaction (Z-axis)
+                else if (this.stage === 2 && this.x >= X_STAGE3) {
+                    const prob = Math.pow(Math.cos(thetaRad / 2), 2);
+                    if (Math.random() < prob) {
+                        this.stage = 3;
+                        this.spinAngle = -Math.PI / 2; // Re-projected to (+z)
+                        this.y = Y_CENTER - 15;
+                    } else {
+                        this.stage = -1;
+                        this.y = Y_CENTER + 25;
+                    }
+                }
+            }
+
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+
+                if (this.stage === -1) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Draw Atom
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.shadowColor = '#00f3ff';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw Spin Vector Arrow
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    const arrowLen = 12;
+                    const ax = this.x + Math.cos(this.spinAngle) * arrowLen;
+                    const ay = this.y + Math.sin(this.spinAngle) * arrowLen;
+                    ctx.lineTo(ax, ay);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Particle System for Optics (Photons)
+        class PhotonParticle {
+            constructor() {
+                this.x = X_SOURCE;
+                this.y = Y_CENTER;
+                this.speed = 2.5 + Math.random() * 0.5;
+                this.stage = 0;
+                this.alpha = 1.0;
+            }
+
+            update(alphaRad) {
+                if (this.stage === -1) {
+                    this.alpha -= 0.05;
+                    return;
+                }
+
+                this.x += this.speed;
+
+                // Pass through Filter 1
+                if (this.stage === 0 && this.x >= X_STAGE1) {
+                    if (Math.random() < 0.5) {
+                        this.stage = 1;
+                    } else {
+                        this.stage = -1;
+                    }
+                }
+                // Filter 2
+                else if (this.stage === 1 && this.x >= X_STAGE2) {
+                    const prob = Math.pow(Math.cos(alphaRad), 2);
+                    if (Math.random() < prob) {
+                        this.stage = 2;
+                    } else {
+                        this.stage = -1;
+                    }
+                }
+                // Filter 3
+                else if (this.stage === 2 && this.x >= X_STAGE3) {
+                    const prob = Math.pow(Math.cos(alphaRad), 2);
+                    if (Math.random() < prob) {
+                        this.stage = 3;
+                    } else {
+                        this.stage = -1;
+                    }
+                }
+            }
+
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.stage === -1 ? '#ef4444' : '#ffb700';
+                ctx.shadowColor = '#ffb700';
+                ctx.shadowBlur = this.stage === -1 ? 0 : 8;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Handle Controls & Presets
+        angleSlider.addEventListener('input', (e) => {
+            thetaDeg = parseFloat(e.target.value);
+            updateAngles();
+        });
+
+        function setPreset(deg) {
+            thetaDeg = deg;
+            angleSlider.value = deg;
+            updateAngles();
+
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function updateAngles() {
+            alphaDeg = thetaDeg / 2;
+            angleSGVal.innerText = `${thetaDeg}°`;
+            angleOptVal.innerText = `${alphaDeg.toFixed(1)}°`;
+
+            // Calculate probabilities
+            const thetaRad = (thetaDeg * Math.PI) / 180;
+            const alphaRad = (alphaDeg * Math.PI) / 180;
+
+            const sgStage2 = Math.pow(Math.cos(thetaRad / 2), 2) * 100;
+            const sgFinal = 0.5 * Math.pow(Math.cos(thetaRad / 2), 4) * 100;
+
+            const optStage2 = Math.pow(Math.cos(alphaRad), 2) * 100;
+            const optFinal = 0.5 * Math.pow(Math.cos(alphaRad), 4) * 100;
+
+            sgStage2Prob.innerText = `${sgStage2.toFixed(1)}%`;
+            sgFinalProb.innerText = `${sgFinal.toFixed(1)}%`;
+
+            optStage2Prob.innerText = `${optStage2.toFixed(1)}%`;
+            optFinalProb.innerText = `${optFinal.toFixed(1)}%`;
+        }
+
+        // Draw SG Apparatus (Magnet Pairs)
+        function drawSGMagnet(ctx, x, label, angleDeg) {
+            ctx.save();
+            ctx.translate(x, Y_CENTER);
+
+            // Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, 0, -65);
+
+            // Rotate apparatus visual
+            ctx.rotate((angleDeg * Math.PI) / 180);
+
+            // Top Pole (N - Pointy)
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(-15, -50);
+            ctx.lineTo(15, -50);
+            ctx.lineTo(0, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('N', -4, -32);
+
+            // Bottom Pole (S - Flat/Concave)
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(-15, 20, 30, 30);
+            ctx.fillStyle = '#fff';
+            ctx.fillText('S', -4, 38);
+
+            // Beam Stop / Shield for lower path
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(-5, 20, 10, 4);
+
+            ctx.restore();
+        }
+
+        // Draw Optical Polarizer
+        function drawPolarizer(ctx, x, label, angleDeg) {
+            ctx.save();
+            ctx.translate(x, Y_CENTER);
+
+            // Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, 0, -65);
+
+            // Outer Frame
+            ctx.strokeStyle = '#ffb700';
+            ctx.lineWidth = 3;
+            ctx.fillStyle = 'rgba(255, 183, 0, 0.05)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Grated Transmission Lines
+            ctx.rotate((angleDeg * Math.PI) / 180);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 1.5;
+
+            for (let offset = -30; offset <= 30; offset += 10) {
+                const h = Math.sqrt(45 * 45 - offset * offset);
+                ctx.beginPath();
+                ctx.moveTo(offset, -h + 2);
+                ctx.lineTo(offset, h - 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // Draw Source & Detector
+        function drawTerminals(ctx, color) {
+            // Source Oven/Laser
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(X_SOURCE - 30, Y_CENTER - 25, 30, 50);
+            ctx.fillStyle = color;
+            ctx.fillRect(X_SOURCE - 5, Y_CENTER - 5, 5, 10);
+
+            // Detector Plate
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(X_DETECTOR, Y_CENTER - 35, 20, 70);
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.fillRect(X_DETECTOR, Y_CENTER - 20, 4, 40);
+            ctx.shadowBlur = 0;
+        }
+
+        let time = 0;
+
+        // Animation Loop
+        function animate() {
+            time += 0.05;
+            const thetaRad = (thetaDeg * Math.PI) / 180;
+            const alphaRad = (alphaDeg * Math.PI) / 180;
+
+            // --- 1. RENDER STERN-GERLACH CANVAS ---
+            ctxSG.clearRect(0, 0, canvasSG.width, canvasSG.height);
+
+            // Draw guides & terminals
+            drawTerminals(ctxSG, '#00f3ff');
+
+            // Draw Magnets
+            drawSGMagnet(ctxSG, X_STAGE1, 'SG₁ (Z-Axis)', 0);
+            drawSGMagnet(ctxSG, X_STAGE2, `SG₂ (${thetaDeg}°)`, thetaDeg);
+            drawSGMagnet(ctxSG, X_STAGE3, 'SG₃ (Z-Axis)', 0);
+
+            // Spawn Atoms
+            if (Math.random() < 0.4) {
+                sgParticles.push(new SGParticle());
+            }
+
+            // Update & Draw Atoms
+            for (let i = sgParticles.length - 1; i >= 0; i--) {
+                const p = sgParticles[i];
+                p.update(thetaRad);
+                p.draw(ctxSG);
+
+                if (p.x > X_DETECTOR + 30 || p.alpha <= 0) {
+                    sgParticles.splice(i, 1);
+                }
+            }
+
+            // --- 2. RENDER OPTICS CANVAS ---
+            ctxOpt.clearRect(0, 0, canvasOpt.width, canvasOpt.height);
+
+            // Draw guides & terminals
+            drawTerminals(ctxOpt, '#ffb700');
+
+            // Draw Polarizers
+            drawPolarizer(ctxOpt, X_STAGE1, 'Polarizer 1 (0°)', 0);
+            drawPolarizer(ctxOpt, X_STAGE2, `Polarizer 2 (${alphaDeg.toFixed(1)}°)`, alphaDeg);
+            drawPolarizer(ctxOpt, X_STAGE3, 'Polarizer 3 (0°)', 0);
+
+            // Continuous EM Wave Drawing
+            ctxOpt.lineWidth = 2;
+
+            // Segment 0: Unpolarized (Dual orthogonal sine waves)
+            ctxOpt.strokeStyle = 'rgba(255, 183, 0, 0.4)';
+            ctxOpt.beginPath();
+            for (let x = X_SOURCE; x < X_STAGE1; x += 2) {
+                const y = Y_CENTER + Math.sin(x * 0.1 - time * 3) * 12;
+                if (x === X_SOURCE) ctxOpt.moveTo(x, y); else ctxOpt.lineTo(x, y);
+            }
+            ctxOpt.stroke();
+
+            // Segment 1: Vertically Polarized
+            ctxOpt.strokeStyle = 'rgba(255, 183, 0, 0.8)';
+            ctxOpt.beginPath();
+            for (let x = X_STAGE1; x < X_STAGE2; x += 2) {
+                const amp = 18 * Math.SQRT1_2;
+                const y = Y_CENTER + Math.sin(x * 0.1 - time * 3) * amp;
+                if (x === X_STAGE1) ctxOpt.moveTo(x, y); else ctxOpt.lineTo(x, y);
+            }
+            ctxOpt.stroke();
+
+            // Segment 2: Rotated Polarization (Alpha)
+            const stage2Amp = 18 * Math.SQRT1_2 * Math.cos(alphaRad);
+            ctxOpt.strokeStyle = `rgba(255, 183, 0, ${Math.max(0.2, Math.cos(alphaRad))})`;
+            ctxOpt.beginPath();
+            for (let x = X_STAGE2; x < X_STAGE3; x += 2) {
+                const y = Y_CENTER + Math.sin(x * 0.1 - time * 3) * stage2Amp * Math.cos(alphaRad);
+                if (x === X_STAGE2) ctxOpt.moveTo(x, y); else ctxOpt.lineTo(x, y);
+            }
+            ctxOpt.stroke();
+
+            // Segment 3: Vertically Polarized Output
+            const finalAmp = stage2Amp * Math.cos(alphaRad);
+            ctxOpt.strokeStyle = `rgba(255, 183, 0, ${Math.max(0.1, Math.pow(Math.cos(alphaRad), 2))})`;
+            ctxOpt.beginPath();
+            for (let x = X_STAGE3; x < X_DETECTOR; x += 2) {
+                const y = Y_CENTER + Math.sin(x * 0.1 - time * 3) * finalAmp;
+                if (x === X_STAGE3) ctxOpt.moveTo(x, y); else ctxOpt.lineTo(x, y);
+            }
+            ctxOpt.stroke();
+
+            // Spawn Photons
+            if (Math.random() < 0.4) {
+                optParticles.push(new PhotonParticle());
+            }
+
+            for (let i = optParticles.length - 1; i >= 0; i--) {
+                const p = optParticles[i];
+                p.update(alphaRad);
+                p.draw(ctxOpt);
+
+                if (p.x > X_DETECTOR + 30 || p.alpha <= 0) {
+                    optParticles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize
+        updateAngles();
+        animate();
+    </script>
+</body>
+</html>
